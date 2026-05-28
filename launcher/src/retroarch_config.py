@@ -1,0 +1,266 @@
+"""
+retroarch_config.py — Mimir RetroArch Portable Configuration Writer
+
+Writes a portable retroarch.cfg to {drive}/emulation/retroarch/retroarch.cfg
+before RetroArch is launched. All paths point to locations on the drive so
+the config works regardless of which machine the SSD is plugged into.
+
+RetroArch is natively portable on Windows — it reads retroarch.cfg from the
+same directory as retroarch.exe. This writer generates that file with correct
+absolute paths derived from the drive letter at runtime.
+
+Only writes the config if it doesn't already exist (idempotent). If the user
+has customized their config, this will never overwrite it.
+
+Also scaffolds all required RetroArch subdirectories so RetroArch doesn't
+complain about missing paths on first launch.
+
+Public functions:
+  write_retroarch_config(paths: MimirPaths) -> bool
+  scaffold_retroarch_dirs(paths: MimirPaths) -> None
+  get_retroarch_dir(paths) -> Path
+  get_retroarch_config_path(paths) -> Path
+"""
+
+from pathlib import Path
+
+
+# ---- Platform definitions -----------------------------------------------
+# Matches the ROM subdirectory names in emulation/roms/
+# Each entry: (dir_name, display_label, common ROM extensions)
+
+PLATFORMS = [
+    ("nes",     "NES",            {".nes", ".zip", ".7z"}),
+    ("snes",    "SNES",           {".smc", ".sfc", ".fig", ".zip", ".7z"}),
+    ("n64",     "Nintendo 64",    {".n64", ".z64", ".v64", ".zip", ".7z"}),
+    ("gba",     "Game Boy Adv.",  {".gba", ".zip", ".7z"}),
+    ("ps1",     "PlayStation",    {".iso", ".bin", ".cue", ".img", ".pbp", ".chd"}),
+    ("ps2",     "PlayStation 2",  {".iso", ".bin", ".chd"}),
+    ("genesis", "Genesis",        {".md", ".gen", ".smd", ".zip", ".7z"}),
+    ("arcade",  "Arcade",         {".zip", ".7z"}),
+]
+
+# Common extension set for quick scan (union of all above)
+ALL_ROM_EXTENSIONS = {
+    ext for _, _, exts in PLATFORMS for ext in exts
+}
+
+
+# ---- Path helpers -------------------------------------------------------
+
+def get_retroarch_dir(paths) -> Path:
+    """Root RetroArch directory: {drive}/emulation/retroarch/"""
+    return paths.root / "emulation" / "retroarch"
+
+
+def get_retroarch_config_path(paths) -> Path:
+    """Path to retroarch.cfg — same dir as retroarch.exe."""
+    return get_retroarch_dir(paths) / "retroarch.cfg"
+
+
+def get_saves_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "saves"
+
+
+def get_states_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "states"
+
+
+def get_screenshots_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "screenshots"
+
+
+def get_system_dir(paths) -> Path:
+    """BIOS / system files directory."""
+    return get_retroarch_dir(paths) / "system"
+
+
+def get_cores_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "cores"
+
+
+def get_assets_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "assets"
+
+
+def get_playlists_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "playlists"
+
+
+def get_thumbnails_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "thumbnails"
+
+
+def get_logs_dir(paths) -> Path:
+    return get_retroarch_dir(paths) / "logs"
+
+
+# ---- Dir scaffold -------------------------------------------------------
+
+def scaffold_retroarch_dirs(paths) -> None:
+    """
+    Create all RetroArch subdirectories before first launch.
+    Idempotent — safe to call every time.
+    """
+    dirs = [
+        get_retroarch_dir(paths),
+        get_saves_dir(paths),
+        get_states_dir(paths),
+        get_screenshots_dir(paths),
+        get_system_dir(paths),
+        get_cores_dir(paths),
+        get_assets_dir(paths),
+        get_playlists_dir(paths),
+        get_thumbnails_dir(paths),
+        get_logs_dir(paths),
+    ]
+    # ROM platform directories
+    for dir_name, _, _ in PLATFORMS:
+        dirs.append(paths.roms / dir_name)
+
+    for d in dirs:
+        d.mkdir(parents=True, exist_ok=True)
+
+
+# ---- Config writer ------------------------------------------------------
+
+def _p(path: Path) -> str:
+    """Convert a Path to a forward-slash string for retroarch.cfg."""
+    return str(path).replace("\\", "/")
+
+
+def write_retroarch_config(paths) -> bool:
+    """
+    Write a portable retroarch.cfg to the RetroArch directory.
+    Only writes if the file doesn't already exist.
+    Returns True if the file is in place (written or pre-existing).
+    """
+    config_path = get_retroarch_config_path(paths)
+
+    if config_path.exists():
+        return True  # Don't overwrite user's existing config
+
+    ra_dir    = get_retroarch_dir(paths)
+    saves     = get_saves_dir(paths)
+    states    = get_states_dir(paths)
+    screens   = get_screenshots_dir(paths)
+    system    = get_system_dir(paths)
+    cores     = get_cores_dir(paths)
+    assets    = get_assets_dir(paths)
+    playlists = get_playlists_dir(paths)
+    thumbs    = get_thumbnails_dir(paths)
+    logs      = get_logs_dir(paths)
+    roms      = paths.roms
+
+    config_lines = f"""\
+# retroarch.cfg — Mimir portable configuration
+# Generated by retroarch_config.py — delete this file to regenerate defaults.
+# All paths use forward slashes and are absolute (drive-letter specific).
+# If you move Mimir to a different drive letter, delete this file and relaunch.
+
+# ---- Directories --------------------------------------------------------
+
+savefile_directory = "{_p(saves)}"
+savestate_directory = "{_p(states)}"
+screenshot_directory = "{_p(screens)}"
+system_directory = "{_p(system)}"
+cores_path = "{_p(cores)}"
+assets_directory = "{_p(assets)}"
+playlist_directory = "{_p(playlists)}"
+thumbnails_directory = "{_p(thumbs)}"
+log_dir = "{_p(logs)}"
+
+# ROM browser opens here by default
+rgui_browser_directory = "{_p(roms)}"
+content_database_directory = "{_p(ra_dir / 'database')}"
+
+# ---- Display ------------------------------------------------------------
+
+video_fullscreen = "false"
+video_windowed_fullscreen = "false"
+video_window_show_decorations = "true"
+
+# Use the Ozone menu driver — best looking and most maintained
+menu_driver = "ozone"
+
+# Smooth scaling — looks better for pixel art than bilinear
+video_smooth = "false"
+video_scale_integer = "false"
+video_aspect_ratio_auto = "true"
+
+# ---- Audio --------------------------------------------------------------
+
+audio_enable = "true"
+audio_driver = "wasapi"
+audio_latency = 64
+audio_sync = "true"
+
+# ---- Input --------------------------------------------------------------
+
+input_autodetect_enable = "true"
+input_joypad_driver = "xinput"
+
+# ---- Saves & States -----------------------------------------------------
+
+# Save to per-game directories instead of dumping everything into one folder
+sort_savefiles_enable = "true"
+sort_savestates_enable = "true"
+sort_savefiles_by_content_enable = "false"
+sort_savestates_by_content_enable = "false"
+
+# Auto-save on exit, auto-load on entry
+savestate_auto_save = "false"
+savestate_auto_load = "false"
+
+# ---- UI Behavior --------------------------------------------------------
+
+# Don't nag about missing assets on fresh install
+menu_show_online_updater = "false"
+menu_show_load_content_animation = "true"
+quick_menu_show_cheats = "false"
+quick_menu_show_shaders = "true"
+quick_menu_show_save_content_dir_override = "false"
+
+# Show the menu on startup instead of immediately trying to load content
+load_dummy_on_core_shutdown = "true"
+check_firmware_before_loading = "true"
+
+# ---- Logging ------------------------------------------------------------
+
+log_to_file = "true"
+log_to_file_timestamp = "false"
+log_verbosity = "false"
+"""
+
+    try:
+        ra_dir.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(config_lines, encoding="utf-8")
+        return True
+    except OSError:
+        return False
+
+
+# ---- ROM scanning -------------------------------------------------------
+
+def scan_roms(paths) -> dict:
+    """
+    Count ROMs per platform by scanning each platform directory.
+    Returns: {platform_dir_name: count}
+    """
+    counts = {}
+    for dir_name, _, extensions in PLATFORMS:
+        rom_dir = paths.roms / dir_name
+        if not rom_dir.exists():
+            counts[dir_name] = 0
+            continue
+        count = sum(
+            1 for f in rom_dir.iterdir()
+            if f.is_file() and f.suffix.lower() in extensions
+        )
+        counts[dir_name] = count
+    return counts
+
+
+def total_rom_count(paths) -> int:
+    """Quick total ROM count across all platforms."""
+    return sum(scan_roms(paths).values())

@@ -1,0 +1,70 @@
+{
+  "models": [
+    {
+      "id": "heavy",
+      "label": "Heavy",
+      "tier_display": "HEAVY",
+      "ollama_model": "qwen2.5:72b-instruct-q4_K_M",
+      "display_name": "Qwen 2.5 72B",
+      "quantization": "Q4_K_M",
+      "parameters_b": 72,
+      "min_vram_gb": 24,
+      "comfortable_vram_gb": 48,
+      "min_ram_gb": 32,
+      "context_window": 32768,
+      "approx_size_gb": 41,
+      "description": "Qwen 2.5 72B runs at 4-bit quantization. At 72 billion parameters, it is the most capable option in this system — best suited for long document analysis, multi-step reasoning, and complex questions that require holding a lot of context at once. It requires at least 24GB of GPU VRAM to run without heavy offloading. On hardware below that threshold it will be slow or may not run usably.",
+      "ideal_use_cases": [
+        "Deep research queries",
+        "Long document reading and analysis",
+        "Complex multi-step reasoning",
+        "Tasks where accuracy matters more than speed"
+      ],
+      "hardware_requirement_note": "24GB+ VRAM recommended. 16GB is possible with significant offloading — expect slow responses."
+    },
+    {
+      "id": "medium",
+      "label": "Medium",
+      "tier_display": "MEDIUM",
+      "ollama_model": "qwen2.5:32b-instruct-q4_K_M",
+      "display_name": "Qwen 2.5 32B",
+      "quantization": "Q4_K_M",
+      "parameters_b": 32,
+      "min_vram_gb": 12,
+      "comfortable_vram_gb": 16,
+      "min_ram_gb": 16,
+      "context_window": 16384,
+      "approx_size_gb": 19,
+      "description": "Qwen 2.5 32B at 4-bit quantization is the most practical tier for daily use. It handles most reference queries, reasoning tasks, and document analysis without the VRAM demands of the 72B model. At 12GB VRAM it runs with minor offloading to system RAM; at 16GB it runs without issue. The speed difference from Heavy is noticeable in a good way.",
+      "ideal_use_cases": [
+        "General-purpose queries",
+        "Knowledge base lookups",
+        "Everyday reasoning and reference",
+        "Most tasks short of deep multi-document analysis"
+      ],
+      "hardware_requirement_note": "12–16GB VRAM. 12GB is functional; 16GB is comfortable with no offloading."
+    },
+    {
+      "id": "lite",
+      "label": "Lite",
+      "tier_display": "LITE",
+      "ollama_model": "mistral:7b",
+      "display_name": "Mistral 7B",
+      "quantization": "default",
+      "parameters_b": 7,
+      "min_vram_gb": 0,
+      "comfortable_vram_gb": 8,
+      "min_ram_gb": 8,
+      "context_window": 8192,
+      "approx_size_gb": 4.1,
+      "description": "Mistral 7B is a lightweight model that runs entirely on CPU — no GPU required. It is fast on modern hardware even without acceleration, and it handles straightforward lookups, simple questions, and quick reference tasks well. It is not built for deep multi-step reasoning or long documents, but for most quick queries it is more than adequate. The right choice on borrowed machines or when fast responses matter more than maximum capability.",
+      "ideal_use_cases": [
+        "Quick lookups and simple questions",
+        "Machines without a capable GPU",
+        "Low-power or borrowed hardware",
+        "Fast responses when depth is not required"
+      ],
+      "hardware_requirement_note": "8GB RAM minimum. No GPU required. GPU acceleration kicks in automatically if available."
+    }
+  ]
+}

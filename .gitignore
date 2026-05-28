@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# PyInstaller build output
+build/
+dist/
+*.spec.bak
+
+# Logs and user data
+logs/
+*.log
+
+# Ollama models (too large for GitHub)
+models/
+
+# AnythingLLM local data
+anythingllm/
+
+# Media files
+media/
+
+# Jellyfin data
+jellyfin/
+
+# ROM files
+emulation/roms/
+
+# User config (contains local paths)
+launcher/config/mimir.json
+
+# Compiled launcher binary (too large for GitHub)
+launcher/_internal/
+
+# Binary tools — download separately per README
+tools/ffmpeg/
+tools/ollama/
+tools/anythingllm/
+tools/jellyfin/
+tools/ytdlp/
+
+# RetroArch binary and database files
+emulation/retroarch/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,8 @@
+# Mimir Launcher — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+PyQt6>=6.6.0
+PyQt6-WebEngine>=6.6.0   # Required for embedded Jellyfin view in MediaPanel (media_panel.py)
+                          # If not installed, MediaPanel falls back to an "Open in Browser" tile
+psutil>=5.9.0
+pyinstaller>=6.0.0

@@ -1,0 +1,2 @@
+269 DEPRECATION: Running PyInstaller as admin is not necessary nor sensible. Run PyInstaller from a non-administrator terminal. PyInstaller 7.0 will block this.
+580 WARNING: collect_data_files - skipping data collection for module 'PyQt6.QtWebEngineCore' as it is not a package.
