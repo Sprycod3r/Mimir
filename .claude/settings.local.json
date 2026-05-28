@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find \"/mnt/c/Users/Trevor/Documents/Claude Cowork/Outputs/Mimir/knowledge\" -type d | sort)",
-      "Bash(ls /mnt/c/Users/Trevor/)"
-    ]
-  }
-}
